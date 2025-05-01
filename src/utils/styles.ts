@@ -4,7 +4,6 @@ const BOARD_SIZE = 5;
 const WINDOW_WIDTH = Dimensions.get('window').width;
 const CELL_SIZE = Math.min(WINDOW_WIDTH / (BOARD_SIZE + 1), 70);
 const CELL_MARGIN = 4;
-const SWIPE_THRESHOLD = 10;
 
  export const styles = StyleSheet.create({
   container: {
@@ -96,6 +95,7 @@ const SWIPE_THRESHOLD = 10;
   selectedCell: {
     borderWidth: 3,
     borderColor: '#4CAF50',
+    transform: [{ scale: 1.5 }]
   },
   selectionBadge: {
     position: 'absolute',

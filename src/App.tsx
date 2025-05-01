@@ -452,13 +452,7 @@ export default function App() {
           validPatternFound: isValid
         }));
 
-        // Animate validation indicator
-        Animated.timing(validPatternAnim, {
-          toValue: isValid ? 1 : 0,
-          duration: 1000,
-          useNativeDriver: true
-        }).start();
-
+      
         // Update last tile
         gestureStateRef.current.lastTile = currentTile;
       }
@@ -588,44 +582,6 @@ export default function App() {
     });
   }, [gameState.animationInProgress, gameState.swipeMode, gameState.board, areAdjacent, confirmConnection]);
 
-  // Render swipe path lines
-  const renderSwipePath = useCallback(() => {
-    const { swipePath, validPatternFound } = gameState;
-    if (!swipePath || swipePath.length < 2) return null;
-
-    return swipePath.slice(1).map((point, index) => {
-      const prevPoint = swipePath[index];
-
-      // Calculate line properties
-      const dx = point.x - prevPoint.x;
-      const dy = point.y - prevPoint.y;
-      const length = Math.sqrt(dx * dx + dy * dy);
-      const angle = Math.atan2(dy, dx) * (180 / Math.PI);
-
-      return (
-        <View
-          key={`line-${index}`}
-          style={[
-            styles.swipePathLine,
-            {
-              width: length,
-              height: 5,
-              left: prevPoint.x,
-              top: prevPoint.y,
-              transform: [
-                { translateY: -2.5 },
-                { rotate: `${angle}deg` },
-                { translateX: 0 },
-                { translateY: 0 }
-              ],
-              transformOrigin: 'left center'
-            }
-          ]}
-        />
-      );
-    });
-  }, [gameState.swipePath, gameState.validPatternFound]);
-
   // Render the game board
   const renderBoard = useCallback(() => {
     const { board, selectedTiles, swipeMode } = gameState;
@@ -689,7 +645,7 @@ export default function App() {
           </View>
         ))}
 
-        {swipeMode && renderSwipePath()}
+        {swipeMode}
         {swipeMode && (
           <View style={styles.swipeModeIndicator}>
             <Text style={styles.swipeModeText}>SWIPE</Text>
@@ -698,7 +654,7 @@ export default function App() {
       </View>
     );
   }, [gameState.board, gameState.selectedTiles, gameState.swipeMode,
-  panResponder.panHandlers, renderSwipePath, handleTilePress]);
+  panResponder.panHandlers, handleTilePress]);
 
   // Main render function
   return (
