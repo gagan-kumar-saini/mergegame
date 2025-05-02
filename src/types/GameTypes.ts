@@ -21,6 +21,7 @@ export interface GestureState {
     highestValue: number;
     selectedTiles: TilePosition[];
     gameOver: boolean;
+    matchCount:number;
     gameWon: boolean;
     animationInProgress: boolean;
     swipeMode: boolean;

@@ -6,18 +6,7 @@ const CELL_SIZE = Math.min(WINDOW_WIDTH / (BOARD_SIZE + 1), 70);
 const CELL_MARGIN = 4;
 
  export const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#faf8ef',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 10,
-  },
-  header: {
-    width: '100%',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
+ 
   title: {
     fontSize: 28,
     fontWeight: 'bold',
@@ -64,55 +53,6 @@ const CELL_MARGIN = 4;
     fontSize: 16,
     fontWeight: 'bold',
   },
-  board: {
-    backgroundColor: '#bbada0',
-    borderRadius: 10,
-    padding: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-  },
-  row: {
-    flexDirection: 'row',
-  },
-  cellContainer: {
-    width: CELL_SIZE,
-    height: CELL_SIZE,
-    margin: CELL_MARGIN,
-    borderRadius: 5,
-    overflow: 'hidden',
-  },
-  cell: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 5,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  cellText: {
-    fontWeight: 'bold',
-  },
-  selectedCell: {
-    borderWidth: 3,
-    borderColor: '#4CAF50',
-    transform: [{ scale: 1.5 }]
-  },
-  selectionBadge: {
-    position: 'absolute',
-    top: 3,
-    right: 3,
-    backgroundColor: '#4CAF50',
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  selectionBadgeText: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
   controls: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -143,20 +83,6 @@ const CELL_MARGIN = 4;
     fontSize: 16,
     color: '#f9f6f2',
     marginRight: 10,
-  },
-  swipeModeIndicator: {
-    position: 'absolute',
-    top: 5,
-    right: 5,
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-    borderRadius: 10,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  swipeModeText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#776e65',
   },
   completionMessage: {
     position: 'absolute',
@@ -242,6 +168,153 @@ const CELL_MARGIN = 4;
     paddingVertical: 10,
     borderRadius: 10,
     marginBottom: 20,
-  }
+  },
+   container: {
+    flex: 1,
+    backgroundColor: '#dsdsd',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  header: {
+    width: '100%',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
+  board: {
+    width: (CELL_SIZE + CELL_MARGIN * 2) * BOARD_SIZE,
+    height: (CELL_SIZE + CELL_MARGIN * 2) * BOARD_SIZE,
+    backgroundColor: '#fffffc',
+    borderRadius: 8,
+    padding: 5,
+    marginVertical: 20,
+  },
+  row: {
+    flexDirection: 'row',
+  },
+  cellContainer: {
+    width: CELL_SIZE + CELL_MARGIN * 2,
+    height: CELL_SIZE + CELL_MARGIN * 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cell: {
+    width: CELL_SIZE,
+    height: CELL_SIZE,
+    borderRadius: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
+    margin: CELL_MARGIN,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  cellText: {
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  selectedCell: {
+    borderWidth: 2,
+    borderColor: '#FFF',
+    shadowColor: '#FFF',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+  },
+  // Animation related styles
+  selectionBadge: {
+    position: 'absolute',
+    top: -10,
+    right: -10,
+    backgroundColor: '#FF4081',
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#FFF',
+  },
+  selectionBadgeText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  swipeModeIndicator: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: 'rgba(255, 64, 129, 0.7)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  swipeModeText: {
+    color: '#FFF',
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
+  swipePathContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 10,
+  },
+  swipePath: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  // Additional styles for animations
+  boardOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    zIndex: 20,
+  },
+  connectionLine: {
+    position: 'absolute',
+    zIndex: 5,
+  },
+  mergeEffect: {
+    position: 'absolute',
+    borderRadius: 50,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  shimmer: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  validPatternIndicator: {
+    position: 'absolute',
+    bottom: 20,
+    padding: 10,
+    backgroundColor: '#4CAF50',
+    borderRadius: 8,
+    zIndex: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  validPatternText: {
+    color: '#FFF',
+    fontWeight: 'bold',
+    marginLeft: 5,
+  },
+
 }
 );
+
+
+ 
