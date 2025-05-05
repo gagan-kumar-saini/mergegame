@@ -42,7 +42,7 @@ export default function App() {
     gameWon: false,
     matchCount:0,
     animationInProgress: false,
-    swipeMode: false,
+    swipeMode: true,
     showTutorial: true,
     swipePath: [],
     validPatternFound: null
@@ -633,7 +633,7 @@ const findLongestValidSubsequence = (tiles: TilePosition[]): TilePosition[] => {
         if (isValid) {
           Animated.timing(validPatternAnim, {
             toValue: 1,
-            duration: 300,
+            duration: 100,
             useNativeDriver: true
           }).start();
         }
@@ -657,7 +657,7 @@ const findLongestValidSubsequence = (tiles: TilePosition[]): TilePosition[] => {
           }));
           
           // Confirm the connection with the valid subsequence
-          setTimeout(() => confirmConnection(), 50);
+          setTimeout(() => confirmConnection(), 30);
         } else {
           // No valid subsequence found, clear selection
           setGameState(prev => ({
@@ -682,7 +682,7 @@ const findLongestValidSubsequence = (tiles: TilePosition[]): TilePosition[] => {
           swipePath: [],
           validPatternFound: null
         }));
-      }, gameState.validPatternFound ? 500 : 0);
+      }, gameState.validPatternFound ? 300 : 0);
     }}), [gameState.swipeMode, getTileAtPosition, addTileToSelection,
   gameState.selectedTiles, gameState.validPatternFound,
     isValidSelectionPattern, confirmConnection, validPatternAnim]);
@@ -907,10 +907,10 @@ const findLongestValidSubsequence = (tiles: TilePosition[]): TilePosition[] => {
           goal={gameState.goal}
         />
       </View>
-      <ModeToggle
+      {/* <ModeToggle
         swipeMode={gameState.swipeMode}
         onToggle={toggleSwipeMode}
-      />
+      /> */}
       {renderBoard()}
       <CompletionMessage
         visible={!!gameState.validPatternFound}

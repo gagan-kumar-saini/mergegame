@@ -1,7 +1,6 @@
  // tileAnimations.ts
+ import { BOARD_SIZE } from '../utils/Constants';
 import { Animated } from 'react-native';
-
-const BOARD_SIZE = 5; // Replace with actual value if needed
 
 export function createTileAnimations(boardSize: number = BOARD_SIZE) {
   return Array(boardSize).fill(0).map(() =>
