@@ -9,6 +9,8 @@ import {
   PanResponder,
   GestureResponderEvent,
   Easing,
+  AppState,
+  AppStateStatus,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { styles } from '../utils/Styles'
@@ -21,6 +23,8 @@ import ModeToggle from '../components/ModeToggle';
 import CompletionMessage from '../components/CompletionMessage';
 import GameOverlay from '../components/GameOverlay';
 import GameControls from '../components/NewGame';
+import { saveGameState, loadGameState } from '../utils/GamePersistence';
+import { createTileAnimations } from '../services/tileAnimations';
 
 const ANIMATION_DURATION = 500;
 
@@ -40,21 +44,10 @@ export default function App() {
     animationInProgress: false,
     swipeMode: false,
     showTutorial: true,
-
     swipePath: [],
     validPatternFound: null
   });
-
-  const tileAnimations = useRef(
-    Array(BOARD_SIZE).fill(0).map(() => 
-      Array(BOARD_SIZE).fill(0).map(() => ({
-        scale: new Animated.Value(1),
-        opacity: new Animated.Value(1),
-        rotate: new Animated.Value(0),
-      }))
-    )
-  ).current;
-
+  const tileAnimations = useMemo(() => createTileAnimations(BOARD_SIZE), []);
   const validPatternAnim = useRef(new Animated.Value(0)).current;
   
   const mergeAnimation = useRef(new Animated.Value(1)).current;
@@ -69,6 +62,9 @@ export default function App() {
   const boardRef = useRef<View>(null);
   const [boardPosition, setBoardPosition] = useState({ x: 0, y: 0 });
 
+  const appStateRef = useRef(AppState.currentState);
+  const isInitialMount = useRef(true);
+
   useEffect(() => {
     if (boardRef.current) {
       boardRef.current.measure((x, y, width, height, pageX, pageY) => {
@@ -77,25 +73,78 @@ export default function App() {
     }
   }, []);
 
-  useEffect(() => {
-    initializeBoard();
-  }, []);
   const initializeBoard = useCallback(() => {
     const newBoard = Array(BOARD_SIZE).fill(0).map(() =>
       Array(BOARD_SIZE).fill(0).map(() =>
         Math.random() < 0.8 ? 2 : 4
       )
+    
     );
 
     setGameState(prev => ({
       ...prev,
       board: newBoard,
       score: 0,
+      bestScore: prev.bestScore,
+      gems: prev.gems,
+      level: 1,
+      goal: 32,
       selectedTiles: [],
       gameOver: false,
-      gameWon: false
+      gameWon: false,
+      matchCount: 0
     }));
   }, []);
+
+  useEffect(() => {
+    const loadSavedGameState = async () => {
+      const savedState = await loadGameState();
+      if (savedState) {
+        setGameState(prev => ({
+          ...prev,
+          ...savedState,
+          // Reset these properties to ensure consistency
+          selectedTiles: [],
+          animationInProgress: false,
+          swipePath: [],
+          validPatternFound: null
+        }));
+      } else {
+        // No saved state, initialize new board
+        initializeBoard();
+      }
+    };
+
+    loadSavedGameState();
+  }, []);
+
+  useEffect(() => {
+    const handleAppStateChange = (nextAppState: AppStateStatus) => {
+      if (
+        appStateRef.current.match(/active/) && 
+        (nextAppState === 'background' || nextAppState === 'inactive')
+      ) {
+        // App is going to background or becoming inactive, save the state
+        saveGameState(gameState);
+      }
+      appStateRef.current = nextAppState;
+    };
+
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+
+    return () => {
+      subscription.remove();
+    };
+  }, [gameState]);
+
+  useEffect(() => {
+    // Skip saving on initial mount
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+  });
+
   const getTileAtPosition = useCallback((x: number, y: number): TilePosition | null => {
     const relativeX = x - boardPosition.x;
     const relativeY = y - boardPosition.y;
@@ -232,7 +281,7 @@ export default function App() {
     return false;
   }, []);
   
-  
+
   const checkForGameOver = useCallback((board: (TilePosition | null)[][]): boolean => {
     // Game is over if player has made 15 matches and no more matches are available
     if (gameState.matchCount >= 15) {
@@ -449,7 +498,14 @@ export default function App() {
 
       const gameWon = highestValue >= gameState.goal;
 
-      const gameOver = !gameWon && checkForGameOver(newBoard);
+      const convertedBoard = newBoard.map((row, rowIndex) =>
+        row.map((value, colIndex) => ({
+          row: rowIndex,
+          col: colIndex,
+          value,
+        }))
+      );
+      const gameOver = !gameWon && checkForGameOver(convertedBoard);
 
       if (newBestScore > gameState.bestScore) {
         try {
