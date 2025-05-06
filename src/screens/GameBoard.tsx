@@ -13,6 +13,7 @@ import {
   AppStateStatus,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { styles } from '../utils/Styles'
 import { BOARD_SIZE, CELL_SIZE, CELL_MARGIN, SWIPE_THRESHOLD, COLORS } from '../utils/Constants'
 import { getTextColor, getFontSize } from '../utils/Utils'
@@ -67,7 +68,7 @@ export default function App() {
 
   useEffect(() => {
     if (boardRef.current) {
-      boardRef.current.measure((x, y, width, height, pageX, pageY) => {
+      boardRef.current.measure(( pageX, pageY) => {
         setBoardPosition({ x: pageX, y: pageY });
       });
     }
@@ -509,8 +510,7 @@ export default function App() {
 
       if (newBestScore > gameState.bestScore) {
         try {
-          // For React Native, you would typically use AsyncStorage here
-          // AsyncStorage.setItem('bestScore', newBestScore.toString());
+          AsyncStorage.setItem('bestScore', newBestScore.toString());
         } catch (error) {
           console.error('Failed to save best score:', error);
         }
