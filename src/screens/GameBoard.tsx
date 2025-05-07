@@ -11,6 +11,8 @@ import {
   Easing,
   AppState,
   AppStateStatus,
+  Image,
+  ImageBackground,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -20,12 +22,11 @@ import { getTextColor, getFontSize } from '../utils/Utils'
 import { GameState, GestureState, TilePosition } from '../types/GameTypes'
 import TutorialOverlay from '../components/TutorialOverlay';
 import GameInfo from '../components/GameInfo';
-import ModeToggle from '../components/ModeToggle';
 import CompletionMessage from '../components/CompletionMessage';
 import GameOverlay from '../components/GameOverlay';
-import GameControls from '../components/NewGame';
 import { saveGameState, loadGameState } from '../utils/GamePersistence';
 import { createTileAnimations } from '../services/tileAnimations';
+
 
 const ANIMATION_DURATION = 500;
 
@@ -276,7 +277,9 @@ export default function App() {
           return false;
         }
       }
+      saveGameState(gameState);
       return true;
+      
     }
     
     return false;
@@ -370,6 +373,12 @@ export default function App() {
 
   const progressToNextLevel = useCallback(() => {
     setGameState(prev => {
+      //store goal in local storage
+      try {
+        AsyncStorage.setItem('goal', (prev.goal).toString());
+      } catch (error) {
+        console.error('Failed to save goal:', error);
+      }
       const newLevel = prev.level + 1;
       const newGoal = prev.goal * 2;
 
@@ -398,12 +407,7 @@ export default function App() {
       tileAnimations[tile.row][tile.col].rotate.setValue(0);
  
       return Animated.sequence([
-        Animated.timing(tileAnimations[tile.row][tile.col].scale, {
-          toValue: 1.2,
-          duration: ANIMATION_DURATION / 2,
-          useNativeDriver: true,
-          easing: Easing.out(Easing.quad)
-        }),
+       
         Animated.parallel([
           Animated.timing(tileAnimations[tile.row][tile.col].scale, {
             toValue: 0.1,
@@ -657,7 +661,7 @@ const findLongestValidSubsequence = (tiles: TilePosition[]): TilePosition[] => {
           }));
           
           // Confirm the connection with the valid subsequence
-          setTimeout(() => confirmConnection(), 30);
+          confirmConnection()
         } else {
           // No valid subsequence found, clear selection
           setGameState(prev => ({
@@ -686,23 +690,6 @@ const findLongestValidSubsequence = (tiles: TilePosition[]): TilePosition[] => {
     }}), [gameState.swipeMode, getTileAtPosition, addTileToSelection,
   gameState.selectedTiles, gameState.validPatternFound,
     isValidSelectionPattern, confirmConnection, validPatternAnim]);
-
-  const toggleSwipeMode = useCallback(() => {
-    setGameState(prev => ({
-      ...prev,
-      swipeMode: !prev.swipeMode,
-      selectedTiles: [],
-      showTutorial: !prev.swipeMode && !prev.showTutorial ? true : false
-    }));
-  }, []);
-
-
-  const closeTutorial = useCallback(() => {
-    setGameState(prev => ({
-      ...prev,
-      showTutorial: false
-    }));
-  }, []);
 
   const handleTilePress = useCallback((row: number, col: number): void => {
     if (gameState.animationInProgress || gameState.swipeMode) return;
@@ -789,7 +776,7 @@ const findLongestValidSubsequence = (tiles: TilePosition[]): TilePosition[] => {
         style={styles.board}
         {...(swipeMode ? panResponder.panHandlers : {})}
         onLayout={() => {
-          boardRef.current?.measure((x, y, width, height, pageX, pageY) => {
+          boardRef.current?.measure(( pageX, pageY) => {
             setBoardPosition({ x: pageX, y: pageY });
           });
         }}
@@ -869,27 +856,6 @@ const findLongestValidSubsequence = (tiles: TilePosition[]): TilePosition[] => {
           </View>
         ))}
 
-        {gameState.swipePath.length > 1 && gameState.swipeMode && (
-          <View  pointerEvents="none">
-            <Svg height="100%" width="100%" >
-              <Path
-                d={`M ${gameState.swipePath.map(p => `${p.x - boardPosition.x},${p.y - boardPosition.y}`).join(' L ')}`}
-                stroke={gameState.validPatternFound ? "#4CAF50" : "#E91E63"}
-                strokeWidth="5"
-                fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeDasharray="5,5"
-              />
-            </Svg>
-          </View>
-        )}
-
-        {swipeMode && (
-          <View style={styles.swipeModeIndicator}>
-            <Text style={styles.swipeModeText}>SWIPE</Text>
-          </View>
-        )}
       </View>
     );
   }, [gameState.board, gameState.selectedTiles, gameState.swipeMode, gameState.swipePath,
@@ -899,35 +865,37 @@ const findLongestValidSubsequence = (tiles: TilePosition[]): TilePosition[] => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
-      <View style={styles.header}>
-        <GameInfo
-          score={gameState.score}
-          bestScore={gameState.bestScore}
-          level={gameState.level}
-          goal={gameState.goal}
-        />
-      </View>
-      {/* <ModeToggle
-        swipeMode={gameState.swipeMode}
-        onToggle={toggleSwipeMode}
-      /> */}
-      {renderBoard()}
-      <CompletionMessage
-        visible={!!gameState.validPatternFound}
-        hasPath={gameState.swipePath.length > 0}
-        animation={validPatternAnim}
+      <ImageBackground
+        source={require('../assets/images/bg-pattern.png')}
+        style={styles.backgroundPattern}
+      >
+        <View>
+      <View style={styles.header} >
+      <GameInfo
+        score={gameState.score}
+        bestScore={gameState.bestScore}
+        level={gameState.level}
+        goal={gameState.goal}
       />
-      <TutorialOverlay
-        visible={gameState.showTutorial}
-        swipeMode={gameState.swipeMode}
-        onClose={closeTutorial}
+      </View>
+        {renderBoard()}
+      <CompletionMessage
+      visible={!!gameState.validPatternFound}
+      hasPath={gameState.swipePath.length > 0}
+      animation={validPatternAnim}
       />
       <GameOverlay
-        gameOver={gameState.gameOver}
-        gameWon={gameState.gameWon}
-        onRestart={initializeBoard}
-        onNextLevel={progressToNextLevel}
+      gameOver={gameState.gameOver}
+      gameWon={gameState.gameWon}
+      onRestart={initializeBoard}
+      onNextLevel={progressToNextLevel}
       />
-      <GameControls onNewGame={initializeBoard} />
+      <View style={styles.pauseButton}>
+      <Image 
+      source={require('../assets/images/pause_button.png')}
+      />
+      </View>
+      </View>
+      </ImageBackground>
     </SafeAreaView>
   )};

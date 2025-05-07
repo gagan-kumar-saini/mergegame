@@ -7,15 +7,15 @@ export const CELL_MARGIN = 4;
 export const SWIPE_THRESHOLD = 10;
 
 export const COLORS: Record<number, string> = {
-    2: '#eee4da',
-    4: '#ede0c8',
-    8: '#f2b179',
-    16: '#f59563',
-    32: '#f67c5f',
-    64: '#f65e3b',
-    128: '#edcf72',
-    256: '#edcc61',
-    512: '#edc850',
-    1024: '#edc53f',
-    2048: '#edc22e'
+    2: '#28D51F',
+    4: '#FFDB00',
+    8: '#0090D9',
+    16: '#FE3F47',
+    32: '#FF6300',
+    64: '#00C368',
+    128: '#142CF1',
+    256: '#97196F',
+    512: '#7BC09B',
+    1024: '#9360A4',
+    2048: '#2BD4D1'
   };

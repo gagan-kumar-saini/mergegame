@@ -4,7 +4,7 @@ import { TilePosition } from "../types/GameTypes";
 
 
 export const getTextColor = (value: number): string => {
-    return value <= 4 ? '#776e65' : '#f9f6f2';
+    return value == 4 ? '#000' : '#FFF';
   };
 
 export const getFontSize = (value: number): number => {

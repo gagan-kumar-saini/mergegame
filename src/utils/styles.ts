@@ -185,8 +185,8 @@ const CELL_MARGIN = 4;
     height: (CELL_SIZE + CELL_MARGIN * 2) * BOARD_SIZE,
     backgroundColor: '#fffffc',
     borderRadius: 8,
-    padding: 5,
-    marginVertical: 20,
+    marginVertical: 30,
+    marginHorizontal: 12,
   },
   row: {
     flexDirection: 'row',
@@ -213,9 +213,10 @@ const CELL_MARGIN = 4;
   cellText: {
     fontWeight: 'bold',
     textAlign: 'center',
+    color: '#FFF',
   },
   selectedCell: {
-    borderWidth: 2,
+    borderWidth: 3,
     borderColor: '#FFF',
     shadowColor: '#FFF',
     shadowOffset: { width: 0, height: 0 },
@@ -240,15 +241,6 @@ const CELL_MARGIN = 4;
     color: '#FFF',
     fontSize: 12,
     fontWeight: 'bold',
-  },
-  swipeModeIndicator: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    backgroundColor: 'rgba(255, 64, 129, 0.7)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
   },
   swipeModeText: {
     color: '#FFF',
@@ -311,6 +303,20 @@ const CELL_MARGIN = 4;
     color: '#FFF',
     fontWeight: 'bold',
     marginLeft: 5,
+  },
+  backgroundPattern: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    zIndex: 10,
+  },
+  pauseButton: {
+    marginTop: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
 }

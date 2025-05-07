@@ -17,9 +17,6 @@ import SplashScreen from 'react-native-splash-screen';
 
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
 
-
-
-
 type Props = {
   navigation: HomeScreenNavigationProp;
 };
@@ -41,13 +38,13 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
   
   const getHighScore = async () => {
     try {
-      const value = await AsyncStorage.getItem('bestScore');
+      const value = await AsyncStorage.getItem('goal');
       if (value !== null) {
         setBestScore(parseInt(value));
       } else {
         setBestScore(0);
       }
-      return value !== null ? parseInt(value) : 0;
+      return value !== null ? parseInt(value) : 16;
     } catch (error) {
       console.error('Error retrieving high score:', error);
       return 0;
@@ -106,7 +103,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
               style={styles.trophyIcon}
               />
                 <View style={styles.scoreValueContainer}>
-                <Text style={styles.scoreValue}>{bestScore}</Text>
+                <Text style= {styles.scoreText}>{bestScore}</Text>
                 </View>
             </View>
           </ImageBackground>
@@ -233,7 +230,6 @@ const styles = StyleSheet.create({
   scoreValueContainer: {
   },
   scoreValue: {
-    color: '#333',
     fontSize: 30,
     fontFamily: 'Poltawski-Nowy',
     fontWeight: 'bold',
