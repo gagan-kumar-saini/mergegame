@@ -44,7 +44,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
       } else {
         setBestScore(0);
       }
-      return value !== null ? parseInt(value) : 16;
+      return value !== null ? parseInt(value) : 16; 
     } catch (error) {
       console.error('Error retrieving high score:', error);
       return 0;
@@ -103,7 +103,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
               style={styles.trophyIcon}
               />
                 <View style={styles.scoreValueContainer}>
-                <Text style= {styles.scoreText}>{bestScore}</Text>
+                <Text style= {styles.highScoreText}>{bestScore}</Text>
                 </View>
             </View>
           </ImageBackground>
@@ -160,6 +160,11 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 22,
     fontWeight: 'bold',
+  },
+  highScoreText: {
+    fontSize: 26,
+    fontWeight: 'bold'
+
   },
   cubeIcon: {
     width: 60,
