@@ -1,8 +1,9 @@
 import React from 'react';
 import AppNavigator from '../src/navigation/AppNavigator';
-import { loadInterstitialAd } from './utils/admobUtils';
+import { loadInterstitialAd,loadRewardedAd} from './utils/admobUtils';
 
 loadInterstitialAd(); 
+loadRewardedAd();
 
 
 const App = () => {

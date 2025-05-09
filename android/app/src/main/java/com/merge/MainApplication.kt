@@ -21,7 +21,6 @@ class MainApplication : Application(), ReactApplication {
             PackageList(this).packages.apply {
 
             }
-
         override fun getJSMainModuleName(): String = "index"
         override fun getUseDeveloperSupport(): Boolean = BuildConfig.DEBUG
         override val isNewArchEnabled: Boolean = BuildConfig.IS_NEW_ARCHITECTURE_ENABLED

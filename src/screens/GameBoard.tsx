@@ -104,11 +104,10 @@ export default function App() {
     }));
   }, []);
 
-  useEffect(() => {
-    loadRewardedAd();
-  }, []);
+  
 
   useEffect(() => {
+  
     const loadSavedGameState = async () => {
       const savedState = await loadGameState();
       if (savedState) {
@@ -382,7 +381,12 @@ export default function App() {
   }, [gameState.matchCount]);
 
   const progressToNextLevel = useCallback(() => {
-    showInterstitialAd(); // Play full-screen ad here
+    showRewardedAd(
+      () => {
+        console.log('User earned a reward!');
+        // Handle reward logic here
+      }
+    );// Play full-screen ad here
     setGameState(prev => {
       // Store goal in local storage
       try {
@@ -908,7 +912,6 @@ export default function App() {
             />
           </View>
         </View>
-        
          <View style={styles.bannerContainer}>
         <AdBanner adUnitId={'ca-app-pub-3940256099942544/6300978111'}
         />
