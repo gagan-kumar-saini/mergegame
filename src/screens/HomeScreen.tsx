@@ -1,4 +1,4 @@
-import React, { use, useEffect, useState,useCallback } from 'react';
+import React, {  useEffect, useState,useCallback, use } from 'react';
 import { 
   View, 
   Text, 
@@ -8,12 +8,28 @@ import {
   ImageBackground,
   Dimensions,
   StatusBar,
+  Platform,
 } from 'react-native';
+const { width, height } = Dimensions.get('window');
 import { useFocusEffect } from '@react-navigation/native';
+import {AdBanner} from '../components/AdBanner'
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/AppNavigator';  
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SplashScreen from 'react-native-splash-screen';
+import {loadRewardedAd,} from '../utils/admobUtils';
+
+
+const scale = Math.min(width, height) / 375; // Base scale on iPhone 8 width
+
+const responsive = {
+  size: (size: number) => Math.round(size * scale),
+  width: (percentage: number) => width * (percentage / 100),
+  height: (percentage: number) => height * (percentage / 100),
+};
+
+// Create responsive padding based on screen size
+const basePadding = width * 0.05;
 
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Home'>;
 
@@ -23,6 +39,11 @@ type Props = {
 
 const HomeScreen: React.FC<Props> = ({ navigation }) => {
   const [bestScore, setBestScore] = useState<number>(0);
+
+  useEffect(() => {
+    loadRewardedAd(); 
+  }, []);
+
 
   useEffect(() => {
     setTimeout(() => {
@@ -55,13 +76,13 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
       
-      {/* Background with floating squares */}
+     
       <ImageBackground 
         source={require('../assets/images/bg-pattern.png')} 
         style={styles.backgroundPattern}
         resizeMode="cover"
       >
-        {/* Top bar with star score and settings */}
+       
         <View style={styles.topBar}>
           <View style={styles.scoreContainer}>
             <Image 
@@ -120,11 +141,16 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
       />
         </TouchableOpacity>
       </ImageBackground>
+
+       <View style={styles.bannerContainer}>
+       <AdBanner adUnitId={'ca-app-pub-3940256099942544/6300978111'}
+        />
+      </View>
+
     </View>
   );
 };
 
-const { width, height } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: {
@@ -136,69 +162,74 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
   },
+   bannerContainer: {
+    position: 'absolute',
+    bottom: 0,
+    width: Dimensions.get('window').width,
+    alignItems: 'center',
+    backgroundColor: '#fff', // optional
+    paddingBottom: 5,
+  },
   topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     width: '100%',
-    paddingHorizontal: 20,
-    paddingTop: 5,
-    marginBottom: 40,
+    paddingHorizontal: basePadding,
+    paddingTop: Platform.OS === 'ios' ? responsive.size(50) : responsive.size(20),
+    marginBottom: responsive.size(30),
   },
   scoreContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    
   },
   starIcon: {
-    width: 30,
-    height: 30,
-    marginRight: 8,
+    width: responsive.size(30),
+    height: responsive.size(30),
+    marginRight: responsive.size(8),
   },
   scoreText: {
     color: 'white',
-    fontSize: 22,
+    fontSize: responsive.size(22),
     fontWeight: 'bold',
   },
   highScoreText: {
-    fontSize: 26,
-    fontWeight: 'bold'
-
+    fontSize: responsive.size(26),
+    fontWeight: 'bold',
   },
   cubeIcon: {
-    width: 60,
-    height: 60,
-    marginLeft: -35,
+    width: responsive.size(60),
+    height: responsive.size(60),
+    marginLeft: responsive.size(-35),
   },
   settingsButton: {
-    padding: 5,
+    padding: responsive.size(5),
   },
   settingsIcon: {
-    width: 30,
-    height: 30,
+    width: responsive.size(30),
+    height: responsive.size(30),
   },
   plusIcon: {
-    width: 20,
-    height: 20,
-    marginLeft: 5,
+    width: responsive.size(20),
+    height: responsive.size(20),
+    marginLeft: responsive.size(5),
   },
   highScoreContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: width * 0.8,
-    height: height * 0.35,
-    marginTop: 100,
+    width: responsive.width(80),
+    height: responsive.height(35),
+    marginTop: responsive.size(100),
   },
   bannerWrapper: {
     width: '100%',
     height: '100%',
     alignItems: 'center',
   },
-  
   highScoreLabel: {
     color: 'white',
-    fontSize: 24,
+    fontSize: responsive.size(24),
     fontWeight: 'bold',
     textShadowColor: 'rgba(0, 0, 0, 0.5)',
     textShadowOffset: { width: 1, height: 1 },
@@ -208,9 +239,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#E0CDB2',
     width: '95%',
     height: '85%',
-    marginTop: -15,
-    borderRadius: 15,
-    padding: 20,
+    marginTop: responsive.size(-15),
+    borderRadius: responsive.size(15),
+    padding: responsive.size(20),
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
@@ -223,30 +254,35 @@ const styles = StyleSheet.create({
   },
   trophySection: {
     alignItems: 'center',
-    marginTop: 50,
+    marginTop: responsive.size(50),
     width: '100%',
     justifyContent: 'center',
   },
   trophyIcon: {
-    width: 100,
-    height: 100,
+    width: responsive.size(100),
+    height: responsive.size(100),
     resizeMode: 'contain',
   },
   scoreValueContainer: {
+    alignItems: 'center',
   },
   scoreValue: {
-    fontSize: 30,
-    fontFamily: 'Poltawski-Nowy',
+    fontSize: responsive.size(30),
+    fontFamily: Platform.select({
+      ios: 'Poltawski-Nowy',
+      android: 'Poltawski-Nowy',
+      default: 'System'
+    }),
     fontWeight: 'bold',
   },
   playButtonContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     position: 'absolute',
-    bottom: height * 0.1,
-    width: width * 0.7,
-    height: 60,
-    borderRadius: 10,
+    bottom: responsive.height(10),
+    width: responsive.width(70),
+    height: responsive.size(80),
+    borderRadius: responsive.size(10),
     overflow: 'hidden',
     shadowRadius: 3,
   },
@@ -255,20 +291,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 20,
+    marginBottom: responsive.size(10),
   },
   playButtonText: {
     color: 'white',
-    fontSize: 24,
+    fontSize: responsive.size(24),
     fontWeight: 'bold',
-    marginRight: 10,
+    marginRight: responsive.size(10),
     textShadowColor: 'rgba(0, 0, 0, 0.25)',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
   },
   playArrow: {
-    width: 24,
-    height: 24,
+    width: responsive.size(24),
+    height: responsive.size(24),
     tintColor: 'white',
   },
 });

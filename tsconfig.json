@@ -1,6 +1,3 @@
 {
-  "extends": "@react-native/typescript-config/tsconfig.json",
-  "compilerOptions": {
-    "types": ["nativewind/types"]
-  }
+  "extends": "@react-native/typescript-config/tsconfig.json"
 }

@@ -14,18 +14,24 @@ import {
   Image,
   ImageBackground,
 } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { styles } from '../utils/Styles'
 import { BOARD_SIZE, CELL_SIZE, CELL_MARGIN, SWIPE_THRESHOLD, COLORS } from '../utils/Constants'
 import { getTextColor, getFontSize } from '../utils/Utils'
 import { GameState, GestureState, TilePosition } from '../types/GameTypes'
-import TutorialOverlay from '../components/TutorialOverlay';
 import GameInfo from '../components/GameInfo';
 import CompletionMessage from '../components/CompletionMessage';
 import GameOverlay from '../components/GameOverlay';
 import { saveGameState, loadGameState } from '../utils/GamePersistence';
 import { createTileAnimations } from '../services/tileAnimations';
+import { AdBanner } from '../components/AdBanner'
+import {
+  loadInterstitialAd,
+  showInterstitialAd,
+  loadRewardedAd,
+  showRewardedAd,
+} from '../utils/admobUtils';
 
 
 const ANIMATION_DURATION = 500;
@@ -42,7 +48,7 @@ export default function App() {
     selectedTiles: [],
     gameOver: false,
     gameWon: false,
-    matchCount:0,
+    matchCount: 0,
     animationInProgress: false,
     swipeMode: true,
     showTutorial: true,
@@ -51,7 +57,7 @@ export default function App() {
   });
   const tileAnimations = useMemo(() => createTileAnimations(BOARD_SIZE), []);
   const validPatternAnim = useRef(new Animated.Value(0)).current;
-  
+
   const mergeAnimation = useRef(new Animated.Value(1)).current;
 
   const gestureStateRef = useRef<GestureState>({
@@ -69,7 +75,7 @@ export default function App() {
 
   useEffect(() => {
     if (boardRef.current) {
-      boardRef.current.measure(( pageX, pageY) => {
+      boardRef.current.measure((pageX, pageY) => {
         setBoardPosition({ x: pageX, y: pageY });
       });
     }
@@ -80,7 +86,7 @@ export default function App() {
       Array(BOARD_SIZE).fill(0).map(() =>
         Math.random() < 0.8 ? 2 : 4
       )
-    
+
     );
 
     setGameState(prev => ({
@@ -96,6 +102,10 @@ export default function App() {
       gameWon: false,
       matchCount: 0
     }));
+  }, []);
+
+  useEffect(() => {
+    loadRewardedAd();
   }, []);
 
   useEffect(() => {
@@ -123,7 +133,7 @@ export default function App() {
   useEffect(() => {
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
       if (
-        appStateRef.current.match(/active/) && 
+        appStateRef.current.match(/active/) &&
         (nextAppState === 'background' || nextAppState === 'inactive')
       ) {
         // App is going to background or becoming inactive, save the state
@@ -150,7 +160,7 @@ export default function App() {
   const getTileAtPosition = useCallback((x: number, y: number): TilePosition | null => {
     const relativeX = x - boardPosition.x;
     const relativeY = y - boardPosition.y;
-    
+
     const boardX = Math.floor(relativeX / (CELL_SIZE + CELL_MARGIN * 2));
     const boardY = Math.floor(relativeY / (CELL_SIZE + CELL_MARGIN * 2));
 
@@ -174,36 +184,36 @@ export default function App() {
 
   const addTileToSelection = useCallback((tile: TilePosition): void => {
     if (!tile) return;
-      
+
     setGameState(prev => {
       const { selectedTiles } = prev;
-        
+
       // Don't add if already selected
       if (selectedTiles.some(t => t.row === tile.row && t.col === tile.col)) {
         return prev;
       }
-        
+
       // First tile selection
       if (selectedTiles.length === 0) {
         return { ...prev, selectedTiles: [tile] };
       }
-        
+
       const lastTile = selectedTiles[selectedTiles.length - 1];
-      
+
       // Must be adjacent
       if (!areAdjacent(lastTile, tile)) {
         return prev;
       }
-        
+
       // Rule 1: Always allow adding more tiles of the same value
       if (tile.value === lastTile.value) {
         return { ...prev, selectedTiles: [...selectedTiles, tile] };
       }
-      
+
       // Rule 2: Check if new tile value is double or half of the previous tiles group
       const selectedValues = selectedTiles.map(t => t.value);
       const lastValue = lastTile.value;
-      
+
       // Count consecutive tiles with the same value at the end
       let count = 0;
       for (let i = selectedTiles.length - 1; i >= 0; i--) {
@@ -213,25 +223,25 @@ export default function App() {
           break;
         }
       }
-      
+
       // Allow adding a double-value tile after at least 2 of the same value
       if (count >= 2 && tile.value === lastValue * 2) {
         return { ...prev, selectedTiles: [...selectedTiles, tile] };
       }
-      
+
       // Removed half-value tile transition as it's not valid
-      
+
       return prev;
     });
   }, [areAdjacent]);
-  
+
   const isValidSelectionPattern = useCallback((tiles: TilePosition[]): boolean => {
     if (tiles.length < 2) return false;
-    
+
     // Group consecutive tiles by value
     const consecutiveGroups: TilePosition[][] = [];
     let currentGroup: TilePosition[] = [tiles[0]];
-    
+
     for (let i = 1; i < tiles.length; i++) {
       if (tiles[i].value === currentGroup[0].value) {
         currentGroup.push(tiles[i]);
@@ -240,20 +250,20 @@ export default function App() {
         currentGroup = [tiles[i]];
       }
     }
-    
+
     if (currentGroup.length > 0) {
       consecutiveGroups.push(currentGroup);
     }
-    
+
     // Case 1: All tiles have the same value (at least 2 tiles)
     if (consecutiveGroups.length === 1) {
       return tiles.length >= 2;
     }
-    
+
     // Case 2: We have exactly two groups with different values
     if (consecutiveGroups.length === 2) {
       const [group1, group2] = consecutiveGroups;
-      
+
       // Check if second group's value is double the first group's value
       // Only allow progression from smaller to larger values (2,2 → 4)
       if (group1[0].value * 2 === group2[0].value) {
@@ -261,17 +271,17 @@ export default function App() {
         return group1.length >= 2;
       }
     }
-    
+
     // Case 3: Multiple groups in a valid pattern (like 2,2,2,4,4)
     if (consecutiveGroups.length > 2) {
       for (let i = 1; i < consecutiveGroups.length; i++) {
-        const prevGroup = consecutiveGroups[i-1];
+        const prevGroup = consecutiveGroups[i - 1];
         const currGroup = consecutiveGroups[i];
-        
+
         // Each transition should follow the double value rule (smaller → larger)
         // And the previous group should have at least 2 tiles
         if (
-          prevGroup.length < 2 || 
+          prevGroup.length < 2 ||
           prevGroup[0].value * 2 !== currGroup[0].value
         ) {
           return false;
@@ -279,32 +289,32 @@ export default function App() {
       }
       saveGameState(gameState);
       return true;
-      
+
     }
-    
+
     return false;
   }, []);
-  
+
 
   const checkForGameOver = useCallback((board: (TilePosition | null)[][]): boolean => {
     // Game is over if player has made 15 matches and no more matches are available
     if (gameState.matchCount >= 15) {
       return true;
     }
-    
+
     // Check all possible valid patterns on the board
-    
+
     // First convert board to a simple 2D array of values for easier processing
-    const valueBoard: (number | null)[][] = board.map(row => 
+    const valueBoard: (number | null)[][] = board.map(row =>
       row.map(cell => cell ? cell.value : null)
     );
-    
+
     // Check all possible valid patterns
     for (let row = 0; row < board.length; row++) {
       for (let col = 0; col < board[0].length; col++) {
         const value = valueBoard[row][col];
         if (value === null) continue;
-        
+
         // Check all possible directions for matches
         const directions = [
           { dr: 0, dc: 1 }, // right
@@ -312,16 +322,16 @@ export default function App() {
           { dr: 1, dc: 1 }, // diagonal down-right
           { dr: -1, dc: 1 }, // diagonal up-right
         ];
-        
+
         // Check for pairs of same value tiles
         for (const { dr, dc } of directions) {
           const r2 = row + dr;
           const c2 = col + dc;
-          
+
           if (r2 < 0 || r2 >= board.length || c2 < 0 || c2 >= board[0].length) continue;
           if (valueBoard[r2][c2] === value) {
             // Found a pair, now check for adjacent tiles that would make a valid pattern
-            
+
             // Pattern 1: Two same value tiles + a third same value tile
             const adjacentDirs = [
               { dr: dr, dc: dc }, // Same direction
@@ -329,18 +339,18 @@ export default function App() {
               { dr: dc, dc: -dr }, // Perpendicular (rotated 90 degrees)
               { dr: -dc, dc: dr }, // Perpendicular (rotated -90 degrees)
             ];
-            
+
             for (const { dr: adr, dc: adc } of adjacentDirs) {
               const r3 = r2 + adr;
               const c3 = c2 + adc;
-              
+
               if (r3 >= 0 && r3 < board.length && c3 >= 0 && c3 < board[0].length) {
                 if (valueBoard[r3][c3] === value) {
                   return false; // Valid pattern found: three tiles of same value
                 }
               }
             }
-            
+
             // Pattern 2: Two same value tiles + a double value tile
             const doubleCheckDirs = [
               { dr: dr, dc: dc }, // Same direction
@@ -348,18 +358,18 @@ export default function App() {
               { dr: dc, dc: -dr }, // Perpendicular
               { dr: -dc, dc: dr }, // Perpendicular
             ];
-            
+
             for (const { dr: ddr, dc: ddc } of doubleCheckDirs) {
               const r3 = r2 + ddr;
               const c3 = c2 + ddc;
-              
+
               if (r3 >= 0 && r3 < board.length && c3 >= 0 && c3 < board[0].length) {
                 if (valueBoard[r3][c3] === value * 2) {
                   return false; // Valid pattern found: two tiles + a double value
                 }
               }
             }
-            
+
             // If we only need to check for pairs, we could return false here as well
             // Since a pair of same values is always a valid match
             return false;
@@ -367,13 +377,14 @@ export default function App() {
         }
       }
     }
-    
+
     return true; // No valid moves found
   }, [gameState.matchCount]);
 
   const progressToNextLevel = useCallback(() => {
+    showInterstitialAd(); // Play full-screen ad here
     setGameState(prev => {
-      //store goal in local storage
+      // Store goal in local storage
       try {
         AsyncStorage.setItem('goal', (prev.goal).toString());
       } catch (error) {
@@ -400,14 +411,14 @@ export default function App() {
 
     const tilesToDisappear = selectedTiles.slice(0, -1);
     const lastTile = selectedTiles[selectedTiles.length - 1];
-    
+
     const disappearAnimations = tilesToDisappear.map(tile => {
       tileAnimations[tile.row][tile.col].scale.setValue(1);
       tileAnimations[tile.row][tile.col].opacity.setValue(1);
       tileAnimations[tile.row][tile.col].rotate.setValue(0);
- 
+
       return Animated.sequence([
-       
+
         Animated.parallel([
           Animated.timing(tileAnimations[tile.row][tile.col].scale, {
             toValue: 0.1,
@@ -428,7 +439,7 @@ export default function App() {
         ])
       ]);
     });
-    
+
     mergeAnimation.setValue(1);
     const mergeAnimationSequence = Animated.sequence([
       Animated.delay(ANIMATION_DURATION / 1),
@@ -454,12 +465,12 @@ export default function App() {
         tileAnimations[tile.row][tile.col].opacity.setValue(1);
         tileAnimations[tile.row][tile.col].rotate.setValue(0);
       });
-      
+
       setGameState(prev => ({
         ...prev,
         animationInProgress: false
       }));
-      
+
       onComplete();
     });
   }, [tileAnimations, mergeAnimation]);
@@ -478,7 +489,7 @@ export default function App() {
     const pointsEarned = selectedTiles[selectedTiles.length - 1].value;
 
     const newBoard = gameState.board.map(row => [...row]);
-    
+
     animateMatchingTiles(selectedTiles, () => {
       selectedTiles.slice(0, -1).forEach(tile => {
         newBoard[tile.row][tile.col] = 0;
@@ -541,38 +552,38 @@ export default function App() {
   }, [gameState, isValidSelectionPattern, validPatternAnim, checkForGameOver, animateMatchingTiles]);
 
   // This function finds the longest valid subsequence in a selection of tiles
-const findLongestValidSubsequence = (tiles: TilePosition[]): TilePosition[] => {
-  if (tiles.length < 2) return [];
-  
-  // Try different length subsequences, starting from the full selection
-  // and working backward to find the longest valid one
-  for (let end = tiles.length; end >= 2; end--) {
-    const subsequence = tiles.slice(0, end);
-    if (isValidSelectionPattern(subsequence)) {
-      return subsequence;
+  const findLongestValidSubsequence = (tiles: TilePosition[]): TilePosition[] => {
+    if (tiles.length < 2) return [];
+
+    // Try different length subsequences, starting from the full selection
+    // and working backward to find the longest valid one
+    for (let end = tiles.length; end >= 2; end--) {
+      const subsequence = tiles.slice(0, end);
+      if (isValidSelectionPattern(subsequence)) {
+        return subsequence;
+      }
     }
-  }
-  
-  // Check if we have consecutive same-value tiles
-  const firstValue = tiles[0].value;
-  let sameValueCount = 1;
-  
-  for (let i = 1; i < tiles.length; i++) {
-    if (tiles[i].value === firstValue) {
-      sameValueCount++;
-    } else {
-      break;
+
+    // Check if we have consecutive same-value tiles
+    const firstValue = tiles[0].value;
+    let sameValueCount = 1;
+
+    for (let i = 1; i < tiles.length; i++) {
+      if (tiles[i].value === firstValue) {
+        sameValueCount++;
+      } else {
+        break;
+      }
     }
+
+    // If we have at least 2 same-value tiles, that's a valid pattern
+    if (sameValueCount >= 2) {
+      return tiles.slice(0, sameValueCount);
+    }
+
+    // No valid subsequence found
+    return [];
   }
-  
-  // If we have at least 2 same-value tiles, that's a valid pattern
-  if (sameValueCount >= 2) {
-    return tiles.slice(0, sameValueCount);
-  }
-  
-  // No valid subsequence found
-  return [];
-}
 
   const panResponder = useMemo(() => PanResponder.create({
     onStartShouldSetPanResponder: () => true,
@@ -584,11 +595,11 @@ const findLongestValidSubsequence = (tiles: TilePosition[]): TilePosition[] => {
       if (!gameState.swipeMode) return;
 
       const { pageX, pageY } = event.nativeEvent;
-    
+
       const startTile = getTileAtPosition(pageX, pageY);
 
       if (startTile) {
-    
+
         setGameState(prev => ({
           ...prev,
           selectedTiles: [startTile],
@@ -596,7 +607,7 @@ const findLongestValidSubsequence = (tiles: TilePosition[]): TilePosition[] => {
           validPatternFound: null
         }));
 
-   
+
         gestureStateRef.current = {
           isActive: true,
           startX: pageX,
@@ -647,19 +658,19 @@ const findLongestValidSubsequence = (tiles: TilePosition[]): TilePosition[] => {
     },
     onPanResponderRelease: () => {
       if (!gameState.swipeMode) return;
-        
+
       // Check if we have any valid sequence in the current selection
       if (gameState.selectedTiles.length >= 2) {
         // Find the longest valid subsequence
         const validSubsequence = findLongestValidSubsequence(gameState.selectedTiles);
-        
+
         if (validSubsequence.length >= 2) {
           // If we have a valid subsequence, use it instead of the full selection
           setGameState(prev => ({
             ...prev,
             selectedTiles: validSubsequence
           }));
-          
+
           // Confirm the connection with the valid subsequence
           confirmConnection()
         } else {
@@ -676,10 +687,10 @@ const findLongestValidSubsequence = (tiles: TilePosition[]): TilePosition[] => {
           selectedTiles: []
         }));
       }
-        
+
       gestureStateRef.current.isActive = false;
       gestureStateRef.current.lastTile = null;
-        
+
       setTimeout(() => {
         setGameState(prev => ({
           ...prev,
@@ -687,7 +698,8 @@ const findLongestValidSubsequence = (tiles: TilePosition[]): TilePosition[] => {
           validPatternFound: null
         }));
       }, gameState.validPatternFound ? 300 : 0);
-    }}), [gameState.swipeMode, getTileAtPosition, addTileToSelection,
+    }
+  }), [gameState.swipeMode, getTileAtPosition, addTileToSelection,
   gameState.selectedTiles, gameState.validPatternFound,
     isValidSelectionPattern, confirmConnection, validPatternAnim]);
 
@@ -776,7 +788,7 @@ const findLongestValidSubsequence = (tiles: TilePosition[]): TilePosition[] => {
         style={styles.board}
         {...(swipeMode ? panResponder.panHandlers : {})}
         onLayout={() => {
-          boardRef.current?.measure(( pageX, pageY) => {
+          boardRef.current?.measure((pageX, pageY) => {
             setBoardPosition({ x: pageX, y: pageY });
           });
         }}
@@ -794,12 +806,12 @@ const findLongestValidSubsequence = (tiles: TilePosition[]): TilePosition[] => {
               const selectionIndex = selectedTiles.findIndex(
                 tile => tile.row === rowIndex && tile.col === colIndex
               );
-              
+
               // Check if this is the last tile in the selection
-              const isLastSelectedTile = 
-                selectionIndex === selectedTiles.length - 1 && 
+              const isLastSelectedTile =
+                selectionIndex === selectedTiles.length - 1 &&
                 selectionIndex > 0;
-              
+
               // Apply rotation transform for disappearing tiles
               const rotateAnimation = tileAnimations[rowIndex][colIndex].rotate.interpolate({
                 inputRange: [0, 1],
@@ -820,10 +832,10 @@ const findLongestValidSubsequence = (tiles: TilePosition[]): TilePosition[] => {
                       isSelected && styles.selectedCell,
                       {
                         transform: [
-                          { 
-                            scale: isLastSelectedTile 
-                              ? mergeAnimation 
-                              : tileAnimations[rowIndex][colIndex].scale 
+                          {
+                            scale: isLastSelectedTile
+                              ? mergeAnimation
+                              : tileAnimations[rowIndex][colIndex].scale
                           },
                           { rotate: rotateAnimation }
                         ],
@@ -838,7 +850,7 @@ const findLongestValidSubsequence = (tiles: TilePosition[]): TilePosition[] => {
                       {cell}
                     </Text>
                     {isSelected && (
-                      <Animated.View 
+                      <Animated.View
                         style={[
                           styles.selectionBadge,
                           isLastSelectedTile && { transform: [{ scale: mergeAnimation }] }
@@ -870,32 +882,38 @@ const findLongestValidSubsequence = (tiles: TilePosition[]): TilePosition[] => {
         style={styles.backgroundPattern}
       >
         <View>
-      <View style={styles.header} >
-      <GameInfo
-        score={gameState.score}
-        bestScore={gameState.bestScore}
-        level={gameState.level}
-        goal={gameState.goal}
-      />
-      </View>
-        {renderBoard()}
-      <CompletionMessage
-      visible={!!gameState.validPatternFound}
-      hasPath={gameState.swipePath.length > 0}
-      animation={validPatternAnim}
-      />
-      <GameOverlay
-      gameOver={gameState.gameOver}
-      gameWon={gameState.gameWon}
-      onRestart={initializeBoard}
-      onNextLevel={progressToNextLevel}
-      />
-      <View style={styles.pauseButton}>
-      <Image 
-      source={require('../assets/images/pause_button.png')}
-      />
-      </View>
+          <View style={styles.header} >
+            <GameInfo
+              score={gameState.score}
+              bestScore={gameState.bestScore}
+              level={gameState.level}
+              goal={gameState.goal}
+            />
+          </View>
+          {renderBoard()}
+          <CompletionMessage
+            visible={!!gameState.validPatternFound}
+            hasPath={gameState.swipePath.length > 0}
+            animation={validPatternAnim}
+          />
+          <GameOverlay
+            gameOver={gameState.gameOver}
+            gameWon={gameState.gameWon}
+            onRestart={initializeBoard}
+            onNextLevel={progressToNextLevel}
+          />
+          <View style={styles.pauseButton}>
+            <Image
+              source={require('../assets/images/pause_button.png')}
+            />
+          </View>
+        </View>
+        
+         <View style={styles.bannerContainer}>
+        <AdBanner adUnitId={'ca-app-pub-3940256099942544/6300978111'}
+        />
       </View>
       </ImageBackground>
     </SafeAreaView>
-  )};
+  )
+};

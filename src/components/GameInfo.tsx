@@ -4,6 +4,7 @@ import ProgressComponent from './ProgressComponent';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
+
 interface GameInfoProps {
   score: number;
   bestScore: number;
