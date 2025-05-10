@@ -40,9 +40,6 @@ type Props = {
 const HomeScreen: React.FC<Props> = ({ navigation }) => {
   const [bestScore, setBestScore] = useState<number>(0);
 
-  useEffect(() => {
-    loadRewardedAd(); 
-  }, []);
 
 
   useEffect(() => {
@@ -143,7 +140,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
       </ImageBackground>
 
        <View style={styles.bannerContainer}>
-       <AdBanner adUnitId={'ca-app-pub-3940256099942544/6300978111'}
+       <AdBanner adUnitId={'ca-app-pub-5686269557208989/6455784018'}
         />
       </View>
 

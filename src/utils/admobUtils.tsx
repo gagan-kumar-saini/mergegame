@@ -1,4 +1,3 @@
-
 import {
     InterstitialAd,
     RewardedAd,
@@ -44,11 +43,15 @@ export const showInterstitialAd = (onAdClosed?: () => void) => {
 // Rewarded
 let rewardedAd: RewardedAd | null = null;
 
-export const loadRewardedAd = (adUnitId: string = TestIds.REWARDED) => {
+export const loadRewardedAd = (adUnitId: string) => {
     rewardedAd = RewardedAd.createForAdRequest(adUnitId, {
         requestNonPersonalizedAdsOnly: true,
     });
-    rewardedAd.load();
+    try {
+        rewardedAd.load();
+    } catch (error) {
+        console.log('Error loading rewarded ad:', error);
+    }
 };
 
 export const showRewardedAd = (

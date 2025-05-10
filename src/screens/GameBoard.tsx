@@ -104,6 +104,10 @@ export default function App() {
     }));
   }, []);
 
+   useEffect(() => {
+    loadRewardedAd("ca-app-pub-5686269557208989/9510232896");
+  }, []);
+
   
 
   useEffect(() => {
@@ -877,6 +881,37 @@ export default function App() {
   }, [gameState.board, gameState.selectedTiles, gameState.swipeMode, gameState.swipePath,
   panResponder.panHandlers, handleTilePress, tileAnimations, mergeAnimation, boardPosition]);
 
+  //funtion to pause the game
+  const pauseGame = useCallback(() => {
+    setGameState(prev => ({
+      ...prev,
+      swipeMode: false
+    }));
+  }, []);
+
+  const resumeGame = useCallback(() => {
+    setGameState(prev => ({
+      ...prev,
+      swipeMode: true
+    }));
+  }, []);
+
+  const renderPauseOverlay = useCallback(() => {
+    if (gameState.swipeMode) return null;
+
+    return (
+      <View>
+        <Text >Game Paused</Text>
+        <TouchableOpacity onPress={resumeGame}>
+          <Text >Tap to Continue</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }, [gameState.swipeMode, resumeGame]);
+
+  
+
+
   // Main render function
   return (
     <SafeAreaView style={styles.container}>
@@ -895,25 +930,22 @@ export default function App() {
             />
           </View>
           {renderBoard()}
-          <CompletionMessage
-            visible={!!gameState.validPatternFound}
-            hasPath={gameState.swipePath.length > 0}
-            animation={validPatternAnim}
-          />
           <GameOverlay
             gameOver={gameState.gameOver}
             gameWon={gameState.gameWon}
             onRestart={initializeBoard}
             onNextLevel={progressToNextLevel}
           />
-          <View style={styles.pauseButton}>
-            <Image
+            <View style={styles.pauseButton}>
+            <TouchableOpacity onPress={() => renderPauseOverlay()}>
+              <Image
               source={require('../assets/images/pause_button.png')}
-            />
-          </View>
+              />
+            </TouchableOpacity>
+            </View>
         </View>
          <View style={styles.bannerContainer}>
-        <AdBanner adUnitId={'ca-app-pub-3940256099942544/6300978111'}
+        <AdBanner adUnitId={'ca-app-pub-5686269557208989/6455784018'}
         />
       </View>
       </ImageBackground>
