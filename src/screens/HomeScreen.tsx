@@ -17,7 +17,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../navigation/AppNavigator';  
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SplashScreen from 'react-native-splash-screen';
-import {loadRewardedAd,} from '../utils/admobUtils';
+import {loadInterstitialAd, loadRewardedAd,} from '../utils/admobUtils';
 
 
 const scale = Math.min(width, height) / 375; // Base scale on iPhone 8 width
@@ -137,13 +137,11 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
       resizeMode="contain"
       />
         </TouchableOpacity>
+         <View style={styles.bannerContainer}>
+          <AdBanner adUnitId={'ca-app-pub-5686269557208989/6455784018'} />
+        </View>
       </ImageBackground>
-
-       <View style={styles.bannerContainer}>
-       <AdBanner adUnitId={'ca-app-pub-5686269557208989/6455784018'}
-        />
-      </View>
-
+      
     </View>
   );
 };
@@ -164,7 +162,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: Dimensions.get('window').width,
     alignItems: 'center',
-    backgroundColor: '#fff', // optional
+    backgroundColor: 'transparent', // optional
     paddingBottom: 5,
   },
   topBar: {

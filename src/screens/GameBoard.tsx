@@ -13,6 +13,7 @@ import {
   AppStateStatus,
   Image,
   ImageBackground,
+  Alert,
 } from 'react-native';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -21,14 +22,12 @@ import { BOARD_SIZE, CELL_SIZE, CELL_MARGIN, SWIPE_THRESHOLD, COLORS } from '../
 import { getTextColor, getFontSize } from '../utils/Utils'
 import { GameState, GestureState, TilePosition } from '../types/GameTypes'
 import GameInfo from '../components/GameInfo';
-import CompletionMessage from '../components/CompletionMessage';
 import GameOverlay from '../components/GameOverlay';
+import GradientIconButton from '../components/GameButton';
 import { saveGameState, loadGameState } from '../utils/GamePersistence';
 import { createTileAnimations } from '../services/tileAnimations';
 import { AdBanner } from '../components/AdBanner'
 import {
-  loadInterstitialAd,
-  showInterstitialAd,
   loadRewardedAd,
   showRewardedAd,
 } from '../utils/admobUtils';
@@ -104,14 +103,11 @@ export default function App() {
     }));
   }, []);
 
-   useEffect(() => {
+  useEffect(() => {
     loadRewardedAd("ca-app-pub-5686269557208989/9510232896");
   }, []);
 
-  
-
   useEffect(() => {
-  
     const loadSavedGameState = async () => {
       const savedState = await loadGameState();
       if (savedState) {
@@ -153,7 +149,6 @@ export default function App() {
   }, [gameState]);
 
   useEffect(() => {
-    // Skip saving on initial mount
     if (isInitialMount.current) {
       isInitialMount.current = false;
       return;
@@ -213,8 +208,6 @@ export default function App() {
         return { ...prev, selectedTiles: [...selectedTiles, tile] };
       }
 
-      // Rule 2: Check if new tile value is double or half of the previous tiles group
-      const selectedValues = selectedTiles.map(t => t.value);
       const lastValue = lastTile.value;
 
       // Count consecutive tiles with the same value at the end
@@ -299,90 +292,113 @@ export default function App() {
   }, []);
 
 
-  const checkForGameOver = useCallback((board: (TilePosition | null)[][]): boolean => {
-    // Game is over if player has made 15 matches and no more matches are available
-    if (gameState.matchCount >= 15) {
-      return true;
+  const shuffleBoard = useCallback(() => {
+    // Collect all non-zero tiles from the current board
+    const nonZeroTiles: number[] = [];
+    gameState.board.forEach(row => {
+      row.forEach(cell => {
+        if (cell !== 0) {
+          nonZeroTiles.push(cell);
+        }
+      });
+    });
+
+    // Shuffle the collected tiles
+    for (let i = nonZeroTiles.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [nonZeroTiles[i], nonZeroTiles[j]] = [nonZeroTiles[j], nonZeroTiles[i]];
     }
 
-    // Check all possible valid patterns on the board
-
-    // First convert board to a simple 2D array of values for easier processing
-    const valueBoard: (number | null)[][] = board.map(row =>
-      row.map(cell => cell ? cell.value : null)
+    // Create a new board with shuffled tiles and fill empty spaces
+    const newBoard = Array(BOARD_SIZE).fill(0).map(() => 
+      Array(BOARD_SIZE).fill(0).map(() => {
+        // If we have shuffled tiles left, use one; otherwise, generate a new tile
+        return nonZeroTiles.length > 0 
+          ? nonZeroTiles.pop()! 
+          : (Math.random() < 0.8 ? 2 : 4)
+      })
     );
 
-    // Check all possible valid patterns
-    for (let row = 0; row < board.length; row++) {
-      for (let col = 0; col < board[0].length; col++) {
-        const value = valueBoard[row][col];
-        if (value === null) continue;
+    // Calculate the cost of shuffling
+    const shuffleCost = 50; // Adjust this value as needed
 
-        // Check all possible directions for matches
-        const directions = [
-          { dr: 0, dc: 1 }, // right
-          { dr: 1, dc: 0 }, // down
-          { dr: 1, dc: 1 }, // diagonal down-right
-          { dr: -1, dc: 1 }, // diagonal up-right
-        ];
+    setGameState(prev => ({
+      ...prev,
+      board: newBoard,
+      gems: Math.max(0, prev.gems - shuffleCost), // Deduct gems, but don't go below 0
+      selectedTiles: [],
+      validPatternFound: null
+    }));
+  }, [gameState.board]);
 
-        // Check for pairs of same value tiles
-        for (const { dr, dc } of directions) {
-          const r2 = row + dr;
-          const c2 = col + dc;
-
-          if (r2 < 0 || r2 >= board.length || c2 < 0 || c2 >= board[0].length) continue;
-          if (valueBoard[r2][c2] === value) {
-            // Found a pair, now check for adjacent tiles that would make a valid pattern
-
-            // Pattern 1: Two same value tiles + a third same value tile
-            const adjacentDirs = [
-              { dr: dr, dc: dc }, // Same direction
-              { dr: -dr, dc: -dc }, // Opposite direction
-              { dr: dc, dc: -dr }, // Perpendicular (rotated 90 degrees)
-              { dr: -dc, dc: dr }, // Perpendicular (rotated -90 degrees)
-            ];
-
-            for (const { dr: adr, dc: adc } of adjacentDirs) {
-              const r3 = r2 + adr;
-              const c3 = c2 + adc;
-
-              if (r3 >= 0 && r3 < board.length && c3 >= 0 && c3 < board[0].length) {
-                if (valueBoard[r3][c3] === value) {
-                  return false; // Valid pattern found: three tiles of same value
-                }
-              }
-            }
-
-            // Pattern 2: Two same value tiles + a double value tile
-            const doubleCheckDirs = [
-              { dr: dr, dc: dc }, // Same direction
-              { dr: -dr, dc: -dc }, // Opposite direction
-              { dr: dc, dc: -dr }, // Perpendicular
-              { dr: -dc, dc: dr }, // Perpendicular
-            ];
-
-            for (const { dr: ddr, dc: ddc } of doubleCheckDirs) {
-              const r3 = r2 + ddr;
-              const c3 = c2 + ddc;
-
-              if (r3 >= 0 && r3 < board.length && c3 >= 0 && c3 < board[0].length) {
-                if (valueBoard[r3][c3] === value * 2) {
-                  return false; // Valid pattern found: two tiles + a double value
-                }
-              }
-            }
-
-            // If we only need to check for pairs, we could return false here as well
-            // Since a pair of same values is always a valid match
-            return false;
-          }
-        }
-      }
+   const swapTiles = useCallback(() => {
+    // Check if exactly two tiles are selected
+    if (gameState.selectedTiles.length !== 2) {
+      Alert.alert(
+        'Invalid Swap', 
+        'Please select exactly two tiles to swap.',
+        [{ text: 'OK', style: 'cancel' }]
+      );
+      return;
     }
 
-    return true; // No valid moves found
-  }, [gameState.matchCount]);
+    const newBoard = gameState.board.map(row => [...row]);
+
+    const [tile1, tile2] = gameState.selectedTiles;
+
+    // Swap the values
+    [newBoard[tile1.row][tile1.col], newBoard[tile2.row][tile2.col]] = 
+    [newBoard[tile2.row][tile2.col], newBoard[tile1.row][tile1.col]];
+
+    setGameState(prev => ({
+      ...prev,
+      board: newBoard,
+      selectedTiles: [], // Clear selection after swap
+      gems: prev.gems // Deduct swap cost
+    }));
+  }, [gameState.selectedTiles, gameState.board, gameState.gems]);
+
+  // Modify the tile press handler to support swap mode
+  const handleTilePress = useCallback((rowIndex: number, colIndex: number) => {
+    // Only handle tile press when not in swipe mode (i.e., in swap mode)
+    if (gameState.swipeMode) return;
+
+    const currentTile: TilePosition = {
+      row: rowIndex,
+      col: colIndex,
+      value: gameState.board[rowIndex][colIndex]
+    };
+
+    setGameState(prev => {
+      const currentSelectedTiles = prev.selectedTiles;
+
+      // If no tiles selected, select the current tile
+      if (currentSelectedTiles.length === 0) {
+        return { ...prev, selectedTiles: [currentTile] };
+      }
+
+      // If one tile already selected
+      if (currentSelectedTiles.length === 1) {
+        // Prevent selecting the same tile twice
+        if (currentSelectedTiles[0].row === rowIndex && 
+            currentSelectedTiles[0].col === colIndex) {
+          return prev;
+        }
+
+        // Add the second tile
+        return { 
+          ...prev, 
+          selectedTiles: [...currentSelectedTiles, currentTile] 
+        };
+      }
+
+      // If two tiles already selected, reset to the new tile
+      return { 
+        ...prev, 
+        selectedTiles: [currentTile] 
+      };
+    });
+  }, [gameState.board, gameState.swipeMode]);
 
   const progressToNextLevel = useCallback(() => {
     showRewardedAd(
@@ -418,7 +434,6 @@ export default function App() {
     }));
 
     const tilesToDisappear = selectedTiles.slice(0, -1);
-    const lastTile = selectedTiles[selectedTiles.length - 1];
 
     const disappearAnimations = tilesToDisappear.map(tile => {
       tileAnimations[tile.row][tile.col].scale.setValue(1);
@@ -522,15 +537,6 @@ export default function App() {
 
       const gameWon = highestValue >= gameState.goal;
 
-      const convertedBoard = newBoard.map((row, rowIndex) =>
-        row.map((value, colIndex) => ({
-          row: rowIndex,
-          col: colIndex,
-          value,
-        }))
-      );
-      const gameOver = !gameWon && checkForGameOver(convertedBoard);
-
       if (newBestScore > gameState.bestScore) {
         try {
           AsyncStorage.setItem('bestScore', newBestScore.toString());
@@ -549,7 +555,6 @@ export default function App() {
           highestValue,
           selectedTiles: [],
           gameWon,
-          gameOver,
           validPatternFound: null,
           gems: updatedGems
         };
@@ -557,14 +562,10 @@ export default function App() {
 
       validPatternAnim.setValue(0);
     });
-  }, [gameState, isValidSelectionPattern, validPatternAnim, checkForGameOver, animateMatchingTiles]);
+  }, [gameState, isValidSelectionPattern, validPatternAnim, animateMatchingTiles]);
 
-  // This function finds the longest valid subsequence in a selection of tiles
   const findLongestValidSubsequence = (tiles: TilePosition[]): TilePosition[] => {
     if (tiles.length < 2) return [];
-
-    // Try different length subsequences, starting from the full selection
-    // and working backward to find the longest valid one
     for (let end = tiles.length; end >= 2; end--) {
       const subsequence = tiles.slice(0, end);
       if (isValidSelectionPattern(subsequence)) {
@@ -572,7 +573,6 @@ export default function App() {
       }
     }
 
-    // Check if we have consecutive same-value tiles
     const firstValue = tiles[0].value;
     let sameValueCount = 1;
 
@@ -583,13 +583,10 @@ export default function App() {
         break;
       }
     }
-
-    // If we have at least 2 same-value tiles, that's a valid pattern
     if (sameValueCount >= 2) {
       return tiles.slice(0, sameValueCount);
     }
 
-    // No valid subsequence found
     return [];
   }
 
@@ -698,94 +695,10 @@ export default function App() {
 
       gestureStateRef.current.isActive = false;
       gestureStateRef.current.lastTile = null;
-
-      setTimeout(() => {
-        setGameState(prev => ({
-          ...prev,
-          swipePath: [],
-          validPatternFound: null
-        }));
-      }, gameState.validPatternFound ? 300 : 0);
     }
   }), [gameState.swipeMode, getTileAtPosition, addTileToSelection,
   gameState.selectedTiles, gameState.validPatternFound,
     isValidSelectionPattern, confirmConnection, validPatternAnim]);
-
-  const handleTilePress = useCallback((row: number, col: number): void => {
-    if (gameState.animationInProgress || gameState.swipeMode) return;
-
-    const tileValue = gameState.board[row][col];
-    const tilePosition = { row, col, value: tileValue };
-
-    setGameState(prev => {
-      const { selectedTiles } = prev;
-
-      if (selectedTiles.length === 0) {
-        // Removed animation that increases tile size
-        return {
-          ...prev,
-          selectedTiles: [tilePosition]
-        };
-      }
-
-      const lastSelected = selectedTiles[selectedTiles.length - 1];
-
-      const isAlreadySelected = selectedTiles.some(
-        t => t.row === row && t.col === col
-      );
-
-      if (isAlreadySelected &&
-        lastSelected.row === row &&
-        lastSelected.col === col &&
-        selectedTiles.length > 1) {
-
-        setTimeout(() => confirmConnection(), 0);
-
-        return prev;
-      }
-
-      if (isAlreadySelected) {
-        return {
-          ...prev,
-          selectedTiles: selectedTiles.filter(
-            t => !(t.row === row && t.col === col)
-          )
-        };
-      }
-
-      if (!areAdjacent(lastSelected, tilePosition)) {
-        // Removed animation that increases tile size
-        return {
-          ...prev,
-          selectedTiles: [tilePosition]
-        };
-      }
-      if (lastSelected.value === tileValue) {
-        // Removed animation that increases tile size
-        return {
-          ...prev,
-          selectedTiles: [...selectedTiles, tilePosition]
-        };
-      }
-      else if (selectedTiles.length >= 2) {
-        const prevTile = selectedTiles[selectedTiles.length - 2];
-
-        if (prevTile.value === lastSelected.value && tileValue === lastSelected.value * 2) {
-          // Removed animation that increases tile size
-          return {
-            ...prev,
-            selectedTiles: [...selectedTiles, tilePosition]
-          };
-        }
-      }
-
-      // Removed animation that increases tile size
-      return {
-        ...prev,
-        selectedTiles: [tilePosition]
-      };
-    });
-  }, [gameState.animationInProgress, gameState.swipeMode, gameState.board, areAdjacent, confirmConnection]);
 
   const renderBoard = useCallback(() => {
     const { board, selectedTiles, swipeMode } = gameState;
@@ -879,40 +792,8 @@ export default function App() {
       </View>
     );
   }, [gameState.board, gameState.selectedTiles, gameState.swipeMode, gameState.swipePath,
-  panResponder.panHandlers, handleTilePress, tileAnimations, mergeAnimation, boardPosition]);
+  panResponder.panHandlers, tileAnimations, mergeAnimation, boardPosition]);
 
-  //funtion to pause the game
-  const pauseGame = useCallback(() => {
-    setGameState(prev => ({
-      ...prev,
-      swipeMode: false
-    }));
-  }, []);
-
-  const resumeGame = useCallback(() => {
-    setGameState(prev => ({
-      ...prev,
-      swipeMode: true
-    }));
-  }, []);
-
-  const renderPauseOverlay = useCallback(() => {
-    if (gameState.swipeMode) return null;
-
-    return (
-      <View>
-        <Text >Game Paused</Text>
-        <TouchableOpacity onPress={resumeGame}>
-          <Text >Tap to Continue</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }, [gameState.swipeMode, resumeGame]);
-
-  
-
-
-  // Main render function
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
@@ -936,18 +817,26 @@ export default function App() {
             onRestart={initializeBoard}
             onNextLevel={progressToNextLevel}
           />
+          <View style={styles.buttonsContainer}>
+            <GradientIconButton
+              imagePath={require('../assets/images/shuffle.png')}
+              onPress={() => shuffleBoard()}
+            />
+            <GradientIconButton
+              imagePath={require('../assets/images/swap.png')}
+             onPress={() => swapTiles()}
+            />
             <View style={styles.pauseButton}>
-            <TouchableOpacity onPress={() => renderPauseOverlay()}>
-              <Image
-              source={require('../assets/images/pause_button.png')}
-              />
-            </TouchableOpacity>
+            <GradientIconButton
+              imagePath={require('../assets/images/pause_button.png')}
+              onPress={() => console.log('Pressed')}
+            />
             </View>
+          </View>
         </View>
-         <View style={styles.bannerContainer}>
-        <AdBanner adUnitId={'ca-app-pub-5686269557208989/6455784018'}
-        />
-      </View>
+        <View style={styles.bannerContainer}>
+          <AdBanner adUnitId={'ca-app-pub-5686269557208989/6455784018'} />
+        </View>
       </ImageBackground>
     </SafeAreaView>
   )

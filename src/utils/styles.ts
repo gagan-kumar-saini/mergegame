@@ -345,20 +345,54 @@ export const styles = StyleSheet.create({
     zIndex: 10,
   },
   pauseButton: {
-    marginTop: WINDOW_HEIGHT * 0.02,
+  },
+  pauseOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 10,
+    zIndex: 20,
   },
-   bannerContainer: {
+  bannerContainer: {
     position: 'absolute',
     bottom: 0,
     width: Dimensions.get('window').width,
     alignItems: 'center',
-    backgroundColor: '#fff', // optional
+    backgroundColor: 'transparent', // optional
     paddingBottom: 5,
   },
-  
+  // Add to your styles.js
+  swapButton: {
+    backgroundColor: '#6b46c1',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    marginVertical: 10,
+    alignSelf: 'center',
+  },
+  swapButtonDisabled: {
+    backgroundColor: '#cccccc',
+    opacity: 0.5,
+  },
+ buttonsContainer: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center', // Optional for visibility
+},
+  swapButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  swapButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
   // Media query style patterns for different device sizes
   ...Platform.select({
     ios: {
@@ -371,7 +405,7 @@ export const styles = StyleSheet.create({
       // Android specific adjustments if needed
     },
   }),
-  
+
   // Orientation-specific styles
   ...(WINDOW_WIDTH > WINDOW_HEIGHT ? {
     // Landscape mode
