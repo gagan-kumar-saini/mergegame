@@ -294,8 +294,10 @@ export default function App() {
 
 
   const shuffleBoard = useCallback(() => {
-    // Collect all non-zero tiles from the current board
-    const nonZeroTiles: number[] = [];
+
+    showRewardedAd(
+      () => {
+     const nonZeroTiles: number[] = [];
     gameState.board.forEach(row => {
       row.forEach(cell => {
         if (cell !== 0) {
@@ -330,10 +332,13 @@ export default function App() {
       selectedTiles: [],
       validPatternFound: null
     }));
+      }
+    );// Play full-screen ad here
+    // Collect all non-zero tiles from the current board
+    
   }, [gameState.board]);
 
    const swapTiles = useCallback(() => {
-    console.log('Swap tiles');
      if (gameState.selectedTiles.length !== 2) {
       Alert.alert(
         'Invalid Swap', 
@@ -342,15 +347,10 @@ export default function App() {
       );
       return;
     }
-    setTimeout(() => {
-      // Show the rewarded ad
-      showRewardedAd
-      (() => {
-    const newBoard = gameState.board.map(row => [...row]);
-
+    showRewardedAd(
+      () => {
+      const newBoard = gameState.board.map(row => [...row]);
     const [tile1, tile2] = gameState.selectedTiles;
-
-    // Swap the values
     [newBoard[tile1.row][tile1.col], newBoard[tile2.row][tile2.col]] = 
     [newBoard[tile2.row][tile2.col], newBoard[tile1.row][tile1.col]];
 
@@ -360,26 +360,10 @@ export default function App() {
       selectedTiles: [], // Clear selection after swap
       gems: prev.gems // Deduct swap cost
     }));
-      });
-    }, 1000); // Delay to allow ad to load
-    showRewardedAd
-      (() => {
-    const newBoard = gameState.board.map(row => [...row]);
-
-    const [tile1, tile2] = gameState.selectedTiles;
-
-    // Swap the values
-    [newBoard[tile1.row][tile1.col], newBoard[tile2.row][tile2.col]] = 
-    [newBoard[tile2.row][tile2.col], newBoard[tile1.row][tile1.col]];
-
-    setGameState(prev => ({
-      ...prev,
-      board: newBoard,
-      selectedTiles: [], // Clear selection after swap
-      gems: prev.gems // Deduct swap cost
-    }));
-      });
-
+      }
+    )
+    
+    
   }, [gameState.selectedTiles, gameState.board, gameState.gems]);
 
   // Modify the tile press handler to support swap mode
@@ -413,10 +397,6 @@ export default function App() {
         lastSelected.row === row &&
         lastSelected.col === col &&
         selectedTiles.length > 1) {
-
-        // // Handle in next tick to avoid state update conflicts
-        // confirmConnection()
-
         return prev;
       }
 
@@ -450,6 +430,7 @@ export default function App() {
             ...prev,
             selectedTiles: [...selectedTiles, tilePosition]
           };
+
     });
   }, [gameState.animationInProgress, gameState.board, areAdjacent]);
 
