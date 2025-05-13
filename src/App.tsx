@@ -4,7 +4,11 @@ import { loadInterstitialAd,loadRewardedAd} from './utils/admobUtils';
 
 
 const App = () => {
- 
+  
+useEffect(() => {
+  loadRewardedAd('ca-app-pub-5686269557208989/9510232896');
+}, []);
+
   return <AppNavigator />;
 };
 

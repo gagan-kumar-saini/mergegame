@@ -11,7 +11,7 @@ import {
   Easing,
   AppState,
   AppStateStatus,
-  Image,
+
   ImageBackground,
   Alert,
 } from 'react-native';
@@ -103,9 +103,10 @@ export default function App() {
     }));
   }, []);
 
-  useEffect(() => {
-    loadRewardedAd("ca-app-pub-5686269557208989/9510232896");
-  }, []);
+ useEffect(() => {
+   loadRewardedAd('ca-app-pub-5686269557208989/9510232896');
+ }, []);
+ 
 
   useEffect(() => {
     const loadSavedGameState = async () => {
@@ -332,8 +333,8 @@ export default function App() {
   }, [gameState.board]);
 
    const swapTiles = useCallback(() => {
-    // Check if exactly two tiles are selected
-    if (gameState.selectedTiles.length !== 2) {
+    console.log('Swap tiles');
+     if (gameState.selectedTiles.length !== 2) {
       Alert.alert(
         'Invalid Swap', 
         'Please select exactly two tiles to swap.',
@@ -341,7 +342,10 @@ export default function App() {
       );
       return;
     }
-
+    setTimeout(() => {
+      // Show the rewarded ad
+      showRewardedAd
+      (() => {
     const newBoard = gameState.board.map(row => [...row]);
 
     const [tile1, tile2] = gameState.selectedTiles;
@@ -356,49 +360,98 @@ export default function App() {
       selectedTiles: [], // Clear selection after swap
       gems: prev.gems // Deduct swap cost
     }));
+      });
+    }, 1000); // Delay to allow ad to load
+    showRewardedAd
+      (() => {
+    const newBoard = gameState.board.map(row => [...row]);
+
+    const [tile1, tile2] = gameState.selectedTiles;
+
+    // Swap the values
+    [newBoard[tile1.row][tile1.col], newBoard[tile2.row][tile2.col]] = 
+    [newBoard[tile2.row][tile2.col], newBoard[tile1.row][tile1.col]];
+
+    setGameState(prev => ({
+      ...prev,
+      board: newBoard,
+      selectedTiles: [], // Clear selection after swap
+      gems: prev.gems // Deduct swap cost
+    }));
+      });
+
   }, [gameState.selectedTiles, gameState.board, gameState.gems]);
 
   // Modify the tile press handler to support swap mode
-  const handleTilePress = useCallback((rowIndex: number, colIndex: number) => {
-    // Only handle tile press when not in swipe mode (i.e., in swap mode)
-    if (gameState.swipeMode) return;
+   // Handle tile tap (for tap mode)
+  const handleTilePress = useCallback((row: number, col: number): void => {
+    if (gameState.animationInProgress) return;
 
-    const currentTile: TilePosition = {
-      row: rowIndex,
-      col: colIndex,
-      value: gameState.board[rowIndex][colIndex]
-    };
+    const tileValue = gameState.board[row][col];
+    const tilePosition = { row, col, value: tileValue };
 
     setGameState(prev => {
-      const currentSelectedTiles = prev.selectedTiles;
+      const { selectedTiles } = prev;
 
-      // If no tiles selected, select the current tile
-      if (currentSelectedTiles.length === 0) {
-        return { ...prev, selectedTiles: [currentTile] };
-      }
-
-      // If one tile already selected
-      if (currentSelectedTiles.length === 1) {
-        // Prevent selecting the same tile twice
-        if (currentSelectedTiles[0].row === rowIndex && 
-            currentSelectedTiles[0].col === colIndex) {
-          return prev;
-        }
-
-        // Add the second tile
-        return { 
-          ...prev, 
-          selectedTiles: [...currentSelectedTiles, currentTile] 
+      if (selectedTiles.length === 0) {
+        return {
+          ...prev,
+          selectedTiles: [tilePosition]
         };
       }
 
-      // If two tiles already selected, reset to the new tile
-      return { 
-        ...prev, 
-        selectedTiles: [currentTile] 
-      };
+      // Get the last selected tile
+      const lastSelected = selectedTiles[selectedTiles.length - 1];
+
+      // Check if this tile is already selected
+      const isAlreadySelected = selectedTiles.some(
+        t => t.row === row && t.col === col
+      );
+
+      // If clicking the last selected tile, confirm the selection
+      if (isAlreadySelected &&
+        lastSelected.row === row &&
+        lastSelected.col === col &&
+        selectedTiles.length > 1) {
+
+        // // Handle in next tick to avoid state update conflicts
+        // confirmConnection()
+
+        return prev;
+      }
+
+      // If clicking the same tile again, deselect it
+      if (isAlreadySelected) {
+        return {
+          ...prev,
+          selectedTiles: selectedTiles.filter(
+            t => !(t.row === row && t.col === col)
+          )
+        };
+      }
+
+      // If not adjacent to last selected tile, start new selection
+      if (!areAdjacent(lastSelected, tilePosition)) {
+        return {
+          ...prev,
+          selectedTiles: [tilePosition]
+        };
+      }
+
+      // Check if valid connection based on values
+      if (lastSelected.value === tileValue) {
+        return {
+          ...prev,
+          selectedTiles: [...selectedTiles, tilePosition]
+        };
+      }
+     
+      return {
+            ...prev,
+            selectedTiles: [...selectedTiles, tilePosition]
+          };
     });
-  }, [gameState.board, gameState.swipeMode]);
+  }, [gameState.animationInProgress, gameState.board, areAdjacent]);
 
   const progressToNextLevel = useCallback(() => {
     showRewardedAd(
@@ -743,7 +796,7 @@ export default function App() {
                 <TouchableOpacity
                   key={`cell-${rowIndex}-${colIndex}`}
                   style={styles.cellContainer}
-                  onPress={() => !swipeMode && handleTilePress(rowIndex, colIndex)}
+                  onPress={() => handleTilePress(rowIndex, colIndex)}
                   activeOpacity={swipeMode ? 1 : 0.7}
                 >
                   <Animated.View
