@@ -360,10 +360,13 @@ export const styles = StyleSheet.create({
   bannerContainer: {
     position: 'absolute',
     bottom: 0,
+    left: 0,
+    right: 0,
     width: Dimensions.get('window').width,
     alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: 'transparent', // optional
-    paddingBottom: 5,
+    
   },
   // Add to your styles.js
   swapButton: {

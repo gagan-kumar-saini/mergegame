@@ -22,7 +22,8 @@ const GameOverlay: React.FC<GameOverlayProps> = ({
         <>
           <Text style={styles.gameWonMessage}>Level Complete!</Text>
           <TouchableOpacity style={styles.button} onPress={onNextLevel}>
-            <Text style={styles.buttonText}>Next Level</Text>
+            <Text style={styles.buttonText}> Next Level</Text>
+            <Text style={styles.buttonText}>Contain ads</Text>
           </TouchableOpacity>
         </>
       ) : (
