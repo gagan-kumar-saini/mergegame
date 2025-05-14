@@ -17,7 +17,7 @@ import {
 } from 'react-native';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { styles } from '../utils/Styles'
+import { styles } from '../utils/styles'
 import { BOARD_SIZE, CELL_SIZE, CELL_MARGIN, SWIPE_THRESHOLD, COLORS } from '../utils/Constants'
 import { getTextColor, getFontSize } from '../utils/Utils'
 import { GameState, GestureState, TilePosition } from '../types/GameTypes'
@@ -851,7 +851,7 @@ export default function App() {
             onRestart={initializeBoard}
             onNextLevel={progressToNextLevel}
           />
-          <View style={styles.buttonsContainer}>
+          {/* <View style={styles.buttonsContainer}>
             <GradientIconButton
               imagePath={require('../assets/images/shuffle.png')}
               onPress={() => shuffleBoard()}
@@ -866,7 +866,7 @@ export default function App() {
               onPress={() => console.log('Pressed')}
             />
             </View>
-          </View>
+          </View> */}
         </View>
         <View style={styles.bannerContainer}>
           <AdBanner adUnitId={'ca-app-pub-5686269557208989/6455784018'} />
