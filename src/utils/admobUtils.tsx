@@ -43,7 +43,7 @@ export const showInterstitialAd = (onAdClosed?: () => void) => {
 // Rewarded
 let rewardedAd: RewardedAd | null = null;
 
-export const loadRewardedAd = (adUnitId: string) => {
+export const loadRewardedAd = (adUnitId: string ) => {
     rewardedAd = RewardedAd.createForAdRequest(adUnitId, {
         requestNonPersonalizedAdsOnly: true,
     });

@@ -17,7 +17,6 @@ import {
 } from 'react-native';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { styles } from '../utils/Styles'
 import { BOARD_SIZE, CELL_SIZE, CELL_MARGIN, SWIPE_THRESHOLD, COLORS } from '../utils/Constants'
 import { getTextColor, getFontSize } from '../utils/Utils'
 import { GameState, GestureState, TilePosition } from '../types/GameTypes'
@@ -26,7 +25,9 @@ import GameOverlay from '../components/GameOverlay';
 import GradientIconButton from '../components/GameButton';
 import { saveGameState, loadGameState } from '../utils/GamePersistence';
 import { createTileAnimations } from '../services/tileAnimations';
+import { styles } from '../utils/styles'
 import { AdBanner } from '../components/AdBanner'
+import PausePopup from '../components/PauseGame'
 import {
   loadRewardedAd,
   showRewardedAd,
@@ -104,7 +105,8 @@ export default function App() {
   }, []);
 
  useEffect(() => {
-   loadRewardedAd('ca-app-pub-5686269557208989/9510232896');
+  //  loadRewardedAd('ca-app-pub-5686269557208989/9510232896');
+  loadRewardedAd('ca-app-pub-3940256099942544/5224354917');
  }, []);
  
 
@@ -835,7 +837,7 @@ export default function App() {
         source={require('../assets/images/bg-pattern.png')}
         style={styles.backgroundPattern}
       >
-        <View>
+        <View style={styles.gameContainer}>
           <View style={styles.header} >
             <GameInfo
               score={gameState.score}
@@ -845,6 +847,13 @@ export default function App() {
             />
           </View>
           {renderBoard()}
+          {/* <PausePopup 
+        score={4096}
+        onResume={() => console.log('Resume game')}
+        onRestart={() => console.log('Restart game')}
+        onHome={() => console.log('Go to home')}
+        onClaim={() => console.log('Claim reward')}
+      /> */}
           <GameOverlay
             gameOver={gameState.gameOver}
             gameWon={gameState.gameWon}

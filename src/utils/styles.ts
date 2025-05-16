@@ -388,6 +388,9 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  gameContainer:{
+    flex: 1,
+  },
   swapButtonText: {
     color: 'white',
     fontWeight: 'bold',

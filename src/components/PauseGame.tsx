@@ -1,144 +1,166 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions, ViewStyle, TextStyle } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient'; // Make sure to install this package
+import { View, Text, TouchableOpacity, StyleSheet, ImageBackground, Image } from 'react-native';
 
-// Theme type definition
-interface PauseMenuTheme {
-  headerColor: string;
-  headerTextColor: string;
-  closeButtonColor: string;
-  contentBackgroundColor: string;
-  textColor: string;
-  scoreValueColor: string;
-  circleButtonColors: [string, string]; // [startColor, endColor]
-  playButtonColors: [string, string]; // [startColor, endColor]
+interface PausePopupProps {
+  score: number;
+  onResume: () => void;
+  onRestart: () => void;
+  onHome: () => void;
+  onClaim: () => void;
 }
 
-// Default theme
-const defaultTheme: PauseMenuTheme = {
-  headerColor: '#4CAF50', // Green
-  headerTextColor: 'white',
-  closeButtonColor: '#F44336', // Red
-  contentBackgroundColor: '#D7CCA1', // Light brown / amber
-  textColor: '#333',
-  scoreValueColor: '#4CAF50', // Green
-  circleButtonColors: ['#FF6B6B', '#F44336'], // Red gradient
-  playButtonColors: ['#FFA726', '#FB8C00'], // Orange gradient
-};
-
-// Props interface
-interface PauseMenuProps {
-  score?: number;
-  onClose?: () => void;
-  onHome?: () => void;
-  onRestart?: () => void;
-  onPlay?: () => void;
-  theme?: Partial<PauseMenuTheme>;
-  containerStyle?: ViewStyle;
-  messageText?: string;
-  pauseText?: string;
-  playText?: string;
-}
-
-// Component
-const PauseMenu: React.FC<PauseMenuProps> = ({
-  score = 4096,
-  onClose = () => {},
-  onHome = () => {},
-  onRestart = () => {},
-  onPlay = () => {},
-  theme = {},
-  containerStyle = {},
-  messageText = "Take a breather. Your progress is safe.",
-  pauseText = "PAUSE",
-  playText = "Play",
+const PausePopup: React.FC<PausePopupProps> = ({
+  score,
+  onResume,
+  onRestart,
+  onHome,
+  onClaim,
 }) => {
- 
-  
-  
-  
   return (
     <View style={styles.overlay}>
-
+      <View style={styles.container}>
+        <ImageBackground
+          source={require('../assets/images/popup_background.png')}
+          resizeMode="contain"
+          style={styles.backgroundImage}
+        
+        >
+        <Text style={styles.title}>Take a breather. Your progress is safe.</Text>
+          <TouchableOpacity style={styles.closeButton} onPress={onResume}>
+            <Image
+              source={require('../assets/images/cross_png.png')}
+              style={styles.cross}
+            />
+          </TouchableOpacity>
+          
+          <View style={styles.content}>
+            <View style={styles.scoreContainer}>
+              <Text style={styles.scoreLabel}>Paused</Text>
+            </View>
+            
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity style={styles.button} onPress={onResume}>
+                <Text style={styles.buttonText}>RESUME</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity style={styles.button} onPress={onRestart}>
+                <Text style={styles.buttonText}>RESTART</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity style={styles.button} onPress={onHome}>
+                <Text style={styles.buttonText}>HOME</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity style={[styles.button, styles.claimButton]} onPress={onClaim}>
+                <Text style={[styles.buttonText, styles.claimButtonText]}>CLAIM REWARD</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ImageBackground>
+      </View>
     </View>
   );
 };
 
-// Base styles that don't change with theme
-const { width } = Dimensions.get('window');
-const containerWidth = Math.min(width * 0.8, 280);
-
 const styles = StyleSheet.create({
   overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    position: 'absolute',
+    height: '100%',
+    width: '100%',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 10,
   },
   container: {
-    width: containerWidth,
+    position: 'relative',
+    width: '80%',
+    maxWidth: 320,
+    aspectRatio: 0.8,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  backgroundImage: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  ribbonContainer: {
-    width: '100%',
-    height: 64,
-    alignItems: 'center',
+  closeButton: {
+    position: 'absolute',
+    top: 15,
+    right: 15,
+    width: 32,
+    height: 32,
     justifyContent: 'center',
-    position: 'relative',
+    alignItems: 'center',
     zIndex: 1,
   },
-  scoreContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
+  cross: {
+    width: 50,
+    height: 50,
+    marginTop: 40,
   },
-  controlsContainer: {
-    flexDirection: 'row',
+  content: {
+    flex: 1,
     justifyContent: 'center',
-    marginBottom: 24,
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 30,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#FFF',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  scoreContainer: {
+    borderRadius: 10,
+    alignItems: 'center',
     width: '100%',
   },
-  circleButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginHorizontal: 16,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+  scoreLabel: {
+    marginTop: -50,
+    fontSize: 22,
+    color: '#FFF',
+    fontWeight: 'bold',
   },
-  circleButtonInner: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
+  scoreValue: {
+    fontSize: 30,
+    fontWeight: 'bold',
+    color: '#FFF',
   },
-  playButtonOuter: {
-    width: 160,
-    height: 56,
-    borderRadius: 12,
+  buttonContainer: {
+    flexDirection: 'row',
+    width: '100%',
     alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
+    justifyContent: 'space-between',
   },
-  playButtonInner: {
-    width: 160,
-    height: 56,
-    borderRadius: 12,
+  button: {
+    backgroundColor: '#4A90E2',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    marginBottom: 12,
     alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  buttonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  claimButton: {
+    backgroundColor: '#FFD700',
+    marginTop: 5,
+  },
+  claimButtonText: {
+    color: '#333',
   },
 });
 
-export default PauseMenu;
+export default PausePopup;
