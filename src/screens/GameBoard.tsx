@@ -105,8 +105,8 @@ export default function App() {
   }, []);
 
  useEffect(() => {
-  //  loadRewardedAd('ca-app-pub-5686269557208989/9510232896');
-  loadRewardedAd('ca-app-pub-3940256099942544/5224354917');
+   loadRewardedAd('ca-app-pub-4657035075256158/3696740803');
+  // loadRewardedAd('ca-app-pub-3940256099942544/5224354917');
  }, []);
  
 
@@ -878,7 +878,7 @@ export default function App() {
           </View>
         </View>
         <View style={styles.bannerContainer}>
-          <AdBanner adUnitId={'ca-app-pub-5686269557208989/6455784018'} />
+          <AdBanner adUnitId={'ca-app-pub-4657035075256158/2575230823'} />
         </View>
       </ImageBackground>
     </SafeAreaView>

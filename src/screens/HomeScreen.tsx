@@ -138,7 +138,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
       />
         </TouchableOpacity>
          <View style={styles.bannerContainer}>
-          <AdBanner adUnitId={'ca-app-pub-5686269557208989/6455784018'} />
+          <AdBanner adUnitId={'ca-app-pub-4657035075256158/2575230823'} />
         </View>
       </ImageBackground>
       
